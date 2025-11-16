@@ -9,7 +9,7 @@ class TextToCypher:
         output = self._pipe(
             [{
                 "role": "user",
-                "content": f"Question: {question} \n Schema: {schema}"}
+                "content": f"Question: {question} \n Schema: {self._schema}"}
             ],
             max_new_tokens=256,
             return_full_text=False
