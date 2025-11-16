@@ -27,9 +27,12 @@ with GraphDatabaseDriver() as driver:
 
             print("Executing Cypher query ....")
             results = driver.execute_query(query)
-            query_result_str = "\n".join([
-                str(x) for x in results
-            ])
+            if len(results) > 0:
+                query_result_str = "\n".join([
+                    str(x) for x in results
+                ])
+            else:
+                query_result_str = "(no result)"
             print(query_result_str)
 
             print("Generating response ....")
