@@ -1,15 +1,67 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+PROMPT_TEMPLATE = """
+<SCHEMA>
 
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    dtype="auto",
-    device_map="auto"
-)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+Question:
+<QUESTION>
 
-prompt = """
+Query:
+<QUERY>
+
+Query result:
+<QUERY-RESULT-STR>
+
+Answer:
+""".strip()
+
+class ResponseGenerator:
+    def __init__(self, schema: str):
+        model_name = "Qwen/Qwen2.5-0.5B-Instruct"
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            dtype="auto",
+            device_map="auto"
+        )
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.schema = schema
+
+    def __call__(self, question: str, query: str, query_result_str: str):
+        prompt = PROMPT_TEMPLATE
+        prompt = prompt.replace("<SCHEMA>", self.schema)
+        prompt = prompt.replace("<QUESTION>", question)
+        prompt = prompt.replace("<QUERY>", query)
+        prompt = prompt.replace("<QUERY-RESULT-STR>", query_result_str)
+
+        messages = [
+            {"role": "system", "content": "Answer the user question using the provided Neo4j context. Only response the query result in natural language."},
+            {"role": "user", "content": prompt}
+        ]
+        text = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True
+        )
+        model_inputs = (
+            self.tokenizer([text], return_tensors="pt")
+            .to(self.model.device)
+        )
+        generated_ids = self.model.generate(
+            **model_inputs,
+            max_new_tokens=512
+        )
+        generated_ids = [
+            output_ids[len(input_ids):]
+            for input_ids, output_ids in zip(model_inputs.input_ids,
+                                             generated_ids)
+        ]
+        response = self.tokenizer.batch_decode(
+            generated_ids,
+            skip_special_tokens=True
+        )
+        return response[0]
+
+schema = """
 Node properties:
 - **Player**
 - accountId: INTEGER
@@ -26,40 +78,23 @@ The relationships:
 (:Player)-[:SHARES]->(:Level)
 (:Player)-[:SUBMITS]->(:Comment)
 (:Level)-[:HAS]->(:Comment)
+""".strip()
 
-Question:
-List all players and their levels.
+print("Preparing pipeline ....")
+generator = ResponseGenerator(schema)
 
-Query:
+question = "List all players and their levels."
+query = """
 MATCH (p:Player)-[:SHARES]->(l:Level)
 RETURN p.username AS username, l.name AS level_name
-
-Query result:
+""".strip()
+query_result_str = """
 {'username': 'Galactic71', 'level_name': 'Lanterns Preview'}
 {'username': 'Demonmaster197', 'level_name': 'fun adventure'}
 {'username': 'Demonmaster197', 'level_name': 'moonlight'}
 {'username': 'usnsrDEMON', 'level_name': 'memories'}
-
-Answer:
 """.strip()
-messages = [
-    {"role": "system", "content": "Answer the user question using the provided Neo4j context. Only response the query result in natural language."},
-    {"role": "user", "content": prompt}
-]
-text = tokenizer.apply_chat_template(
-    messages,
-    tokenize=False,
-    add_generation_prompt=True
-)
-model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
 
-generated_ids = model.generate(
-    **model_inputs,
-    max_new_tokens=512
-)
-generated_ids = [
-    output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
-]
-
-response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
+print("Generating ...")
+response = generator(question, query, query_result_str)
 print(response)
