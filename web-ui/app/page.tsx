@@ -299,14 +299,13 @@ export default function Home() {
                     </>
                   ) : (
                     <>
-                      <span className="text-xl">🚀</span>
                       <span>Send</span>
                     </>
                   )}
                 </button>
               </div>
               <p className="text-xs text-ml-light/50 mt-2 text-center">
-                Powered by AI • Knowledge Graph Database • Real-time Analysis
+                Made by Kelompok T • Knowledge Graph AI System
               </p>
             </div>
           </div>
