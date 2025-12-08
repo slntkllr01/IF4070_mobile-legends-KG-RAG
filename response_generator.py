@@ -22,7 +22,7 @@ class ResponseGenerator:
         
         config = load_config()
         api_key = config.get_gemini_api_key()
-        
+
         if not api_key or api_key == "YOUR_GEMINI_API_KEY":
             raise ValueError("Please set your Gemini API key in config.toml")
         

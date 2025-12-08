@@ -15,38 +15,44 @@ class TextToCypher:
         self._model = genai.GenerativeModel('gemini-2.5-flash')
 
     def __call__(self, question: str):
-        # Enhanced prompt with examples
-        prompt = f"""You are a Cypher query generator for Neo4j. Convert the question to a Cypher query.
+        # Prompt template
+        prompt = f"""
+        You are an expert Neo4j developer converting natural language questions into Cypher queries.
 
-Database Schema:
-{self._schema}
+        ### DATABASE SCHEMA INSTRUCTIONS:
+        Strictly use ONLY the node labels, relationship types, and properties defined in the schema below. Do not invent new relationships or properties.
 
-CRITICAL RULES:
-1. Hero properties: id, name (all lowercase like 'layla', 'miya')
-2. Use relationships: (h:Hero)-[:HAS_ROLE]->(r:Role {{name: 'role_name'}})
-3. NEVER use h.role or h.lane - they don't exist as properties
-4. Role names: marksman, tank, mage, fighter, assassin, support
-5. Return ONLY the Cypher query, NO explanations or markdown
+        {self._schema}
 
-EXAMPLES:
-Question: List all marksman heroes
-Cypher: MATCH (h:Hero)-[:HAS_ROLE]->(r:Role {{name: 'marksman'}}) RETURN h.name
+        ### SYNTAX RULES:
+        1. **Directionality:** Pay attention to relationship directions (->, <-, or -).
+        2. **Case Sensitivity:** Ensure string matching is case-insensitive if needed (e.g., `toLower(n.name) = 'layla'`).
+        3. **Data Types:** Treat numbers as integers/floats and names as strings.
+        4. **Clean Output:** Output ONLY the Cypher query string. No markdown, no explanations.
 
-Question: Show me all tank heroes  
-Cypher: MATCH (h:Hero)-[:HAS_ROLE]->(r:Role {{name: 'tank'}}) RETURN h.name
+        ### EXAMPLES OF LOGIC MAPPING:
+        - "Find X": MATCH (n:Label {{prop: 'X'}}) RETURN n
+        - "List all X": MATCH (n:Label) RETURN n
+        - "Count X": MATCH (n:Label) RETURN count(n)
+        - "X related to Y": MATCH (a:Label {{name: 'X'}})-[:RELATIONSHIP]->(b:Label) RETURN b
 
-Question: Who is Layla?
-Cypher: MATCH (h:Hero {{name: 'layla'}}) RETURN h
+        ### FEW-SHOT EXAMPLES:
+        Question: Who are the marksman heroes?
+        Cypher: MATCH (h:Hero)-[:HAS_ROLE]->(r:Role {{name: 'marksman'}}) RETURN h.name
 
-Question: What heroes counter Miya?
-Cypher: MATCH (h:Hero {{name: 'miya'}})<-[:COUNTERS]-(counter:Hero) RETURN counter.name
+        Question: Find heroes that counter Miya.
+        Cypher: MATCH (h:Hero {{name: 'miya'}})<-[:COUNTERS]-(counter:Hero) RETURN counter.name
 
-Question: How many heroes are there?
-Cypher: MATCH (h:Hero) RETURN count(h) as total
+        Question: Which hero has the highest physical attack?
+        Cypher: MATCH (h:Hero) RETURN h.name, h.physical_attack ORDER BY h.physical_attack DESC LIMIT 1
 
-Now convert this question to Cypher:
-Question: {question}
-Cypher:"""
+        Question: How many heroes are in the database?
+        Cypher: MATCH (h:Hero) RETURN count(h) as total_heroes
+
+        ### YOUR TASK:
+        Question: {question}
+        Cypher:
+        """
         
         response = self._model.generate_content(prompt)
         generated_text = response.text.strip()
