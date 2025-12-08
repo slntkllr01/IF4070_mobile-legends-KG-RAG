@@ -17,7 +17,7 @@
 === RELATIONSHIPS ===
 (:Hero)-[:COMPATIBLE_WITH]->(:Hero)
 (:Hero)-[:COUNTERS]->(:Hero)
-(:Hero)-[:DEALS_DAMAGE]->(:DamageType)
+(:Hero)-[:HAS_DAMAGE_TYPE]->(:DamageType)
 (:Hero)-[:HAS_ROLE]->(:Role)
 (:Hero)-[:HAS_SPECIALTY]->(:Specialty)
-(:Hero)-[:SUITED_FOR]->(:Lane)
+(:Hero)-[:HAS_LANE]->(:Lane)
