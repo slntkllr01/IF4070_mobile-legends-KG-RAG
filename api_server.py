@@ -6,6 +6,7 @@ from database import GraphDatabaseDriver
 from response_generator import ResponseGenerator
 from text_to_cypher import TextToCypher
 import traceback
+import time
 
 # Global variables
 schema = ""
@@ -99,6 +100,9 @@ async def chat(request: ChatRequest):
         print(f"\n💬 Question: {question}")
         query = ttc(question)
         print(f"🔍 Generated query: {query}")
+        
+        # Delay to avoid rate limit
+        time.sleep(10)
         
         # Execute query
         try:

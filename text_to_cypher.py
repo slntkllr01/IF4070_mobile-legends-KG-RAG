@@ -25,10 +25,11 @@ class TextToCypher:
         {self._schema}
 
         ### SYNTAX RULES:
-        1. **Directionality:** Pay attention to relationship directions (->, <-, or -).
-        2. **Case Sensitivity:** Ensure string matching is case-insensitive if needed (e.g., `toLower(n.name) = 'layla'`).
-        3. **Data Types:** Treat numbers as integers/floats and names as strings.
-        4. **Clean Output:** Output ONLY the Cypher query string. No markdown, no explanations.
+        1. Pay attention to relationship directions (->, <-, or -).
+        2. Ensure string matching is case-insensitive if needed (e.g., `toLower(n.name) = 'layla'`).
+        3. Treat numbers as integers/floats and names as strings.
+        4. Output ONLY the Cypher query string. No markdown, no explanations.
+        5. each Individual is written in lowercase in queries, e.g., 'layla', 'miya'.
 
         ### EXAMPLES OF LOGIC MAPPING:
         - "Find X": MATCH (n:Label {{prop: 'X'}}) RETURN n

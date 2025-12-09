@@ -1,6 +1,7 @@
 from database import GraphDatabaseDriver
 from response_generator import ResponseGenerator
 from text_to_cypher import TextToCypher
+import time
 
 with GraphDatabaseDriver() as driver:
     with open("schema_example.txt") as fp:
@@ -26,6 +27,9 @@ with GraphDatabaseDriver() as driver:
             print("Generating Cypher query ....")
             query = ttc(question)
             print(query)
+            
+            # Delay to avoid rate limit
+            time.sleep(10)
 
             print("Executing Cypher query ....")
             try:
